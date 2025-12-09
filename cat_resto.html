@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu du Restaurant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px 10px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            font-size: 28px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .menu-grid {
+            display: grid;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .menu-item {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+
+        .menu-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .menu-item.selected {
+            border: 3px solid #667eea;
+            transform: scale(1.02);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+        }
+
+        .menu-item-image-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+
+        .menu-item-image {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            object-fit: cover;
+            object-position: center;
+            display: block;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            border: 4px solid white;
+        }
+
+        .menu-item-content {
+            padding: 20px;
+        }
+
+        .menu-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .menu-item-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            flex: 1;
+        }
+
+        .menu-item-price {
+            font-size: 22px;
+            font-weight: bold;
+            color: #667eea;
+            margin-left: 10px;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+
+        .checkbox-container label {
+            margin-left: 10px;
+            font-size: 16px;
+            color: #666;
+            cursor: pointer;
+        }
+
+        .submit-button {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .submit-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.5);
+        }
+
+        .submit-button:active {
+            transform: translateY(0);
+        }
+
+        .submit-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .selection-info {
+            text-align: center;
+            color: white;
+            margin-bottom: 15px;
+            font-size: 16px;
+            padding: 12px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 18px;
+            padding: 40px;
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 24px;
+                margin-bottom: 20px;
+            }
+
+            .menu-item-image-container {
+                padding: 15px;
+            }
+
+            .menu-item-image {
+                width: 160px;
+                height: 160px;
+            }
+
+            .menu-item-content {
+                padding: 15px;
+            }
+
+            .menu-item-name {
+                font-size: 18px;
+            }
+
+            .menu-item-price {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍽️ Notre Menu</h1>
+        
+        <div id="selection-info" class="selection-info" style="display: none;">
+            <span id="selection-count">0</span> plat(s) sélectionné(s)
+        </div>
+
+        <form id="menu-form">
+            <div id="loading" class="loading">Chargement des plats...</div>
+            <div class="menu-grid" id="menu-container" style="display: none;">
+                <!-- Les plats seront ajoutés ici par JavaScript -->
+            </div>
+            
+            <button type="submit" class="submit-button" id="submit-btn" disabled>
+                Commander (<span id="btn-count">0</span>)
+            </button>
+        </form>
+    </div>
+
+    <script>
+        const menuContainer = document.getElementById('menu-container');
+        const menuForm = document.getElementById('menu-form');
+        const submitBtn = document.getElementById('submit-btn');
+        const selectionInfo = document.getElementById('selection-info');
+        const selectionCount = document.getElementById('selection-count');
+        const btnCount = document.getElementById('btn-count');
+        const loadingDiv = document.getElementById('loading');
+
+        // Fonction pour charger toutes les images du dossier
+        async function loadImagesFromFolder() {
+            const possibleExtensions = ['png', 'jpg', 'jpeg', 'webp', 'gif'];
+            const imageFiles = [];
+            
+            // Essayer de charger les images numérotées de 1 à 100
+            for (let i = 1; i <= 100; i++) {
+                for (const ext of possibleExtensions) {
+                    const path = `image/${i}.${ext}`;
+                    
+                    try {
+                        // Créer une promesse pour vérifier si l'image existe
+                        const exists = await checkImageExists(path);
+                        if (exists) {
+                            imageFiles.push(path);
+                            break; // Passer au numéro suivant si trouvé
+                        }
+                    } catch (e) {
+                        // Continuer à essayer
+                    }
+                }
+            }
+            
+            return imageFiles;
+        }
+
+        // Fonction pour vérifier si une image existe
+        function checkImageExists(url) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => resolve(true);
+                img.onerror = () => resolve(false);
+                img.src = url;
+            });
+        }
+
+        // Initialiser le menu
+        async function initMenu() {
+            const images = await loadImagesFromFolder();
+            
+            if (images.length === 0) {
+                loadingDiv.textContent = 'Aucune image trouvée dans le dossier "image"';
+                return;
+            }
+
+            loadingDiv.style.display = 'none';
+            menuContainer.style.display = 'grid';
+
+            // Créer les éléments du menu
+            images.forEach((imgSrc, index) => {
+                const menuItem = document.createElement('div');
+                menuItem.className = 'menu-item';
+                menuItem.setAttribute('data-index', index);
+                
+                menuItem.innerHTML = `
+                    <div class="menu-item-image-container">
+                        <img src="${imgSrc}" alt="Plat ${index + 1}" class="menu-item-image" 
+                             onerror="this.src='https://via.placeholder.com/180/667eea/ffffff?text=Image+Non+Disponible'">
+                    </div>
+                    <div class="menu-item-content">
+                        <div class="menu-item-header">
+                            <div class="menu-item-name">nom</div>
+                            <div class="menu-item-price">prix €</div>
+                        </div>
+                        <div class="checkbox-container">
+                            <input type="checkbox" id="plat${index}" name="plats" value="plat${index}">
+                            <label for="plat${index}">Sélectionner</label>
+                        </div>
+                    </div>
+                `;
+                
+                menuContainer.appendChild(menuItem);
+
+                // Permettre de cliquer sur toute la carte pour sélectionner/désélectionner
+                menuItem.addEventListener('click', function(e) {
+                    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'LABEL') {
+                        const checkbox = this.querySelector('input[type="checkbox"]');
+                        checkbox.checked = !checkbox.checked;
+                        updateSelection();
+                    }
+                });
+            });
+
+            // Gérer les changements de sélection
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', updateSelection);
+            });
+        }
+
+        function updateSelection() {
+            // Retirer la classe selected de tous les items
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+
+            // Compter et marquer les items sélectionnés
+            const selectedCheckboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+            const count = selectedCheckboxes.length;
+
+            selectedCheckboxes.forEach(checkbox => {
+                const selectedItem = checkbox.closest('.menu-item');
+                selectedItem.classList.add('selected');
+            });
+
+            // Mettre à jour l'affichage
+            selectionCount.textContent = count;
+            btnCount.textContent = count;
+
+            if (count > 0) {
+                selectionInfo.style.display = 'block';
+                submitBtn.disabled = false;
+            } else {
+                selectionInfo.style.display = 'none';
+                submitBtn.disabled = true;
+            }
+        }
+
+        // Gérer la soumission du formulaire
+        menuForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const selectedCheckboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+            
+            if (selectedCheckboxes.length > 0) {
+                let orderSummary = 'Commande confirmée!\n\n';
+                selectedCheckboxes.forEach(checkbox => {
+                    const item = checkbox.closest('.menu-item');
+                    const dishName = item.querySelector('.menu-item-name').textContent;
+                    const dishPrice = item.querySelector('.menu-item-price').textContent;
+                    orderSummary += `- ${dishName}: ${dishPrice}\n`;
+                });
+                
+                alert(orderSummary);
+            }
+        });
+
+        // Charger le menu au démarrage
+        initMenu();
+    </script>
+</body>
+</html>
